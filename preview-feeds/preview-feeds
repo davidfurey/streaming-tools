@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+export DISPLAY=:0
+
+preview_window=$(wmctrl -l | grep -m 1 "Multiview (Windowed)" | cut -d" " -f1)
+
+if [ -n "$preview_window" ]; then 
+  wmctrl -i -r $preview_window -e 0,600,100,640,360
+  gst-launch-1.0 \
+    jackaudiosrc connect=0 client-name="preview-gstream" ! \
+    audioconvert ! \
+    audioresample ! audio/x-raw,channels=2,rate=48000 ! \
+    opusenc bitrate=20000 ! \
+    rtpopuspay ! udpsink host=127.0.0.1 port=5002 \
+    ximagesrc use-damage=false xid=$preview_window ! \
+    clockoverlay halignment=left valignment=bottom shaded-background=true shading-value=200 font-desc="10" deltay=25 deltax=223 ! \
+    timeoverlay halignment=left valignment=bottom shaded-background=true shading-value=200 font-desc="10" deltay=25 deltax=299 ! \
+    videoscale ! \
+    videoconvert ! \
+    video/x-raw,width=640,height=360,framerate=15/1 ! \
+    videoscale ! videorate ! videoconvert ! \
+    vp8enc error-resilient=1 target-bitrate=400000 deadline=10000 ! \
+    rtpvp8pay ! queue ! udpsink host=127.0.0.1 port=5004
+else
+  echo "Multiview window is not open"
+fi

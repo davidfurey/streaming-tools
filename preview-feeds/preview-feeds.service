@@ -1,0 +1,19 @@
+# Systemd service file for preview-feeds daemon
+#
+
+[Unit]
+Description=preview-feeds daemon service
+After=syslog.target network.target
+
+[Service]
+User=user
+WorkingDirectory=/usr/local/share/preview-feeds/
+ExecStart=/usr/local/share/preview-feeds/preview-feeds
+
+#KillMode=process
+Restart=always
+RestartSec=5000ms
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
